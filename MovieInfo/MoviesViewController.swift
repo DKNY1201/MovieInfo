@@ -8,26 +8,114 @@
 
 import UIKit
 import AFNetworking
+import MBProgressHUD
+import ReachabilitySwift
 
-class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
-    @IBOutlet weak var tableView: UITableView!
     var movies: [NSDictionary]?
+    var filteredMovies: [NSDictionary]?
+    var titleMovies = [String]()
+    var filteredTitleMovies = [String]()
     var endpoint: String!
+    let refreshControl = UIRefreshControl()
+    let reachability = Reachability()!
+    var searchActive: Bool = false
+    
+    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var networkErrorView: UIView!
+    @IBOutlet weak var segmentControl: UIBarButtonItem!
+    @IBOutlet weak var searchBar: UISearchBar!
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        networkErrorView.isHidden = true
+        
         tableView.delegate = self
         tableView.dataSource = self
+        searchBar.delegate = self
         
-        loadMovies()
+        refreshControl.addTarget(self, action: #selector(MoviesViewController.loadMovies), for: UIControlEvents.valueChanged)
+        tableView.addSubview(refreshControl)
+    }
+    
+    @IBAction func switchView(_ sender: AnyObject) {
+        print("switching view...")
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        print("view will appear")
+        
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(self.reachabilityChanged),name: ReachabilityChangedNotification,object: reachability)
+        
+        do {
+            try reachability.startNotifier()
+        } catch {
+            print("could not start reachability notifier")
+        }
+    }
+    
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        print(searchText)
+        
+        filteredTitleMovies = self.titleMovies.filter({ (text) -> Bool in
+            let tmp: NSString = text as NSString
+            let range = tmp.range(of: searchText, options: NSString.CompareOptions.caseInsensitive)
+            return range.location != NSNotFound
+        })
+//        filteredMovies = self.movies?.filter({ (text) -> Bool in
+//            let text = $0["title"]
+//            let tmp: NSString = text as NSString
+//            let range = tmp.range(of: searchText, options: NSString.CompareOptions.caseInsensitive)
+//            return range.location != NSNotFound
+//
+//        })
+        if(filteredTitleMovies.count == 0){
+            searchActive = false;
+        } else {
+            searchActive = true;
+        }
+        self.tableView.reloadData()
+    }
+    
+    func reachabilityChanged(note: NSNotification) {
+        let reachability = note.object as! Reachability
+        if reachability.isReachable {
+            networkErrorView.isHidden = true
+            
+            DispatchQueue.main.async {
+                self.loadMovies()
+            }
+        } else {
+            networkErrorView.isHidden = false
+        }
+    }
+    
+//    override func viewDidAppear(_ animated: Bool) {
+//        super.viewDidAppear(animated)
+//        
+//        print("view did appear")
+//    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        reachability.stopNotifier()
+        NotificationCenter.default.removeObserver(self, name: ReachabilityChangedNotification, object: reachability)
+    }
+//
+//    override func viewDidDisappear(_ animated: Bool) {
+//        super.viewDidDisappear(animated)
+//        print("view did disappear")
+//    }
     
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if let movies = movies {
@@ -39,6 +127,10 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
+        cell.accessoryType = UITableViewCellAccessoryType.none
+        
+        print(self.filteredTitleMovies)
+        print(self.filteredTitleMovies.count)
         
         let movie = movies?[indexPath.row]
         
@@ -71,14 +163,26 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
             delegate: nil,
             delegateQueue: OperationQueue.main
         )
+        
+        MBProgressHUD.showAdded(to: self.view, animated: true)
         let task: URLSessionDataTask =
             session.dataTask(with: request,
                              completionHandler: { (dataOrNil, response, error) in
+                                if (error != nil) {
+                                    MBProgressHUD.hide(for: self.view, animated: true)
+                                }
                                 if let data = dataOrNil {
                                     if let responseDictionary = try! JSONSerialization.jsonObject(
                                         with: data, options:[]) as? NSDictionary {
                                         self.movies = responseDictionary["results"] as? [NSDictionary]
+                                        for movie in self.movies! {
+                                            let title = movie["title"] as? String
+                                            self.titleMovies.append(title!)
+                                        }
+                                        print("Title array: \(self.titleMovies)")
                                         self.tableView.reloadData()
+                                        self.refreshControl.endRefreshing()
+                                        MBProgressHUD.hide(for: self.view, animated: true)
                                     }
                                 }
             })
@@ -91,16 +195,10 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-        
         let indexPath = tableView.indexPathForSelectedRow
         let movie = movies?[(indexPath?.row)!]
         let movieDetailVC = segue.destination as! MovieDetailViewController
         
         movieDetailVC.movie = movie
-        
     }
-    
-
 }

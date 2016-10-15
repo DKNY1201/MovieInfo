@@ -7,4 +7,6 @@ target 'MovieInfo' do
 
   # Pods for MovieInfo
   pod 'AFNetworking'
+  pod 'MBProgressHUD'
+  pod 'ReachabilitySwift', git: 'https://github.com/ashleymills/Reachability.swift'
 end

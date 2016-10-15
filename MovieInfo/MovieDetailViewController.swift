@@ -15,6 +15,10 @@ class MovieDetailViewController: UIViewController {
     @IBOutlet weak var posterImage: UIImageView!
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var infoView: UIView!
+    @IBOutlet weak var detailTopNavigation: UINavigationItem!
+    @IBOutlet weak var likeLabel: UILabel!
+    @IBOutlet weak var ratingLabel: UILabel!
+    @IBOutlet weak var dateLabel: UILabel!
     
     var movie: NSDictionary!
     
@@ -23,6 +27,14 @@ class MovieDetailViewController: UIViewController {
 
         let title = movie?["title"] as! String
         titleLabel.text = title
+        detailTopNavigation.title = title
+        let releaseDate = movie?["release_date"] as! String
+        dateLabel.text = releaseDate
+        let averageRating = movie?["vote_average"] as! Float
+        ratingLabel.text = String(averageRating) + " %"
+        let likeCount = movie?["vote_count"] as! Int
+        likeLabel.text = String(likeCount)
+        
         let overview = movie?["overview"] as! String
         overviewLabel.text = overview
         overviewLabel.sizeToFit()
@@ -32,7 +44,7 @@ class MovieDetailViewController: UIViewController {
             posterImage.setImageWith(posterUrl)
         }
         
-        scrollView.contentSize = CGSize(width: scrollView.bounds.size.width, height: infoView.frame.origin.y + infoView.bounds.size.height)
+        scrollView.contentSize = CGSize(width: scrollView.bounds.size.width, height: infoView.frame.origin.y + infoView.frame.size.height + 10)
         
     }
 
