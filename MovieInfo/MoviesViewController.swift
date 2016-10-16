@@ -15,8 +15,6 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
 
     var movies: [NSDictionary]?
     var filteredMovies: [NSDictionary]?
-    var titleMovies = [String]()
-    var filteredTitleMovies = [String]()
     var endpoint: String!
     let refreshControl = UIRefreshControl()
     let reachability = Reachability()!
@@ -63,27 +61,35 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
         }
     }
     
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchActive = true
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        searchActive = false
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        searchActive = false
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchActive = false
+    }
+    
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        print(searchText)
-        
-        filteredTitleMovies = self.titleMovies.filter({ (text) -> Bool in
-            let tmp: NSString = text as NSString
-            let range = tmp.range(of: searchText, options: NSString.CompareOptions.caseInsensitive)
-            return range.location != NSNotFound
+        filteredMovies = self.movies?.filter({ (movie) -> Bool in
+            let title = movie["title"] as! String
+            return title.localizedStandardContains(searchText)
         })
-//        filteredMovies = self.movies?.filter({ (text) -> Bool in
-//            let text = $0["title"]
-//            let tmp: NSString = text as NSString
-//            let range = tmp.range(of: searchText, options: NSString.CompareOptions.caseInsensitive)
-//            return range.location != NSNotFound
-//
-//        })
-        if(filteredTitleMovies.count == 0){
+
+        if(filteredMovies?.count == 0){
             searchActive = false;
         } else {
             searchActive = true;
         }
+        
         self.tableView.reloadData()
     }
     
@@ -118,10 +124,14 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
 //    }
     
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if let movies = movies {
-            return movies.count
+        if searchActive {
+            return filteredMovies?.count ?? 0
         } else {
-            return 0
+            if let movies = movies {
+                return movies.count
+            } else {
+                return 0
+            }
         }
     }
     
@@ -129,10 +139,13 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
         let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieCell
         cell.accessoryType = UITableViewCellAccessoryType.none
         
-        print(self.filteredTitleMovies)
-        print(self.filteredTitleMovies.count)
+        var movie: NSDictionary?
         
-        let movie = movies?[indexPath.row]
+        if searchActive {
+            movie = filteredMovies?[indexPath.row]
+        } else {
+            movie = movies?[indexPath.row]
+        }
         
         let title = movie?["title"] as! String
         cell.titleLabel.text = title
@@ -175,11 +188,6 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
                                     if let responseDictionary = try! JSONSerialization.jsonObject(
                                         with: data, options:[]) as? NSDictionary {
                                         self.movies = responseDictionary["results"] as? [NSDictionary]
-                                        for movie in self.movies! {
-                                            let title = movie["title"] as? String
-                                            self.titleMovies.append(title!)
-                                        }
-                                        print("Title array: \(self.titleMovies)")
                                         self.tableView.reloadData()
                                         self.refreshControl.endRefreshing()
                                         MBProgressHUD.hide(for: self.view, animated: true)
