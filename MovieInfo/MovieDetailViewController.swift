@@ -28,8 +28,24 @@ class MovieDetailViewController: UIViewController {
         let title = movie?["title"] as! String
         titleLabel.text = title
         detailTopNavigation.title = title
-        let releaseDate = movie?["release_date"] as! String
-        dateLabel.text = releaseDate
+        
+        let userCalendar = Calendar.current
+        let releaseDateStr = movie?["release_date"] as! String
+        let releaseDateArr = releaseDateStr.components(separatedBy: "-")
+        let year = releaseDateArr[0]
+        let month = releaseDateArr[1]
+        let day = releaseDateArr[2]
+        var dateComponent = DateComponents()
+        dateComponent.year = Int(year) ?? 2016
+        dateComponent.month = Int(month) ?? 10
+        dateComponent.day = Int(day) ?? 16
+        let releaseDate = userCalendar.date(from: dateComponent)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .long
+        dateLabel.text = dateFormatter.string(from: releaseDate!)
+        
+        
+        
         let averageRating = movie?["vote_average"] as! Float
         ratingLabel.text = String(averageRating) + " %"
         let likeCount = movie?["vote_count"] as! Int

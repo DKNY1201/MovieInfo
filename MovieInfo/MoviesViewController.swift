@@ -49,11 +49,8 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        print("view will appear")
-        
         
         NotificationCenter.default.addObserver(self, selector: #selector(self.reachabilityChanged),name: ReachabilityChangedNotification,object: reachability)
-        
         do {
             try reachability.startNotifier()
         } catch {
@@ -62,18 +59,22 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
     }
     
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        print("searchBarTextDidBeginEditing")
         searchActive = true
     }
     
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        print("searchBarTextDidEndEditing")
         searchActive = false
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        print("searchBarCancelButtonClicked")
         searchActive = false
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        print("searchBarSearchButtonClicked")
         searchActive = false
     }
     
