@@ -22,12 +22,11 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var networkErrorView: UIView!
-    @IBOutlet weak var segmentControl: UIBarButtonItem!
     @IBOutlet weak var searchBar: UISearchBar!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         networkErrorView.isHidden = true
         
         tableView.delegate = self
@@ -36,10 +35,6 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
         
         refreshControl.addTarget(self, action: #selector(MoviesViewController.loadMovies), for: UIControlEvents.valueChanged)
         tableView.addSubview(refreshControl)
-    }
-    
-    @IBAction func switchView(_ sender: AnyObject) {
-        print("switching view...")
     }
 
     override func didReceiveMemoryWarning() {
@@ -57,27 +52,6 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
             print("could not start reachability notifier")
         }
     }
-    
-    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        print("searchBarTextDidBeginEditing")
-        searchActive = true
-    }
-    
-    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-        print("searchBarTextDidEndEditing")
-        searchActive = false
-    }
-    
-    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        print("searchBarCancelButtonClicked")
-        searchActive = false
-    }
-    
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        print("searchBarSearchButtonClicked")
-        searchActive = false
-    }
-    
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         filteredMovies = self.movies?.filter({ (movie) -> Bool in
@@ -106,23 +80,12 @@ class MoviesViewController: UIViewController, UITableViewDelegate, UITableViewDa
             networkErrorView.isHidden = false
         }
     }
-    
-//    override func viewDidAppear(_ animated: Bool) {
-//        super.viewDidAppear(animated)
-//        
-//        print("view did appear")
-//    }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         reachability.stopNotifier()
         NotificationCenter.default.removeObserver(self, name: ReachabilityChangedNotification, object: reachability)
     }
-//
-//    override func viewDidDisappear(_ animated: Bool) {
-//        super.viewDidDisappear(animated)
-//        print("view did disappear")
-//    }
     
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if searchActive {
